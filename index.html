@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sania Birthday Countdown - FINAL DEPLOYMENT VERSION</title>
+    <style>
+        /* --- Root Variables & Fonts --- */
+        :root {
+            --primary-color: #e91e63; /* Pink/Red */
+            --primary-dark: #c2185b; /* Dark Pink/Red */
+            --secondary-color: #ffb300;
+            --text-light: #ffffff;
+            --text-dark: #333333;
+            --font-family: 'Montserrat', sans-serif;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --hassan-bg: #1a1a1a; 
+            --hassan-text: #ffb300; 
+            --calendar-day-bg: #f9f9f9;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght=700&display=swap');
+
+        /* --- Global Fixes & Stability --- */
+        * { box-sizing: border-box; }
+        body {
+            font-family: var(--font-family);
+            background-color: #000000;
+            color: var(--text-dark);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            overflow-x: hidden;
+            overflow-y: auto; 
+            position: relative;
+        }
+
+        /* --- Background Stars (Dynamic) --- */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 10% 20%, rgba(255,255,255,0.8) 1px, transparent 1.5px),
+                        radial-gradient(circle at 70% 80%, rgba(255,255,255,0.7) 1px, transparent 1.5px),
+                        radial-gradient(circle at 40% 50%, rgba(255,255,255,0.9) 0.5px, transparent 1px);
+            background-size: 150px 150px; 
+            opacity: 0.8;
+            animation: moveStars 50s linear infinite; 
+            z-index: 0;
+        }
+        @keyframes moveStars {
+            from { background-position: 0 0; }
+            to { background-position: 100% 100%; }
+        }
+
+        /* --- General Layout & Card Styles --- */
+        .card-wrapper { 
+            display: flex; 
+            justify-content: center; 
+            align-items: stretch; 
+            width: 95%; 
+            max-width: 950px; 
+            z-index: 10; 
+            margin: 20px 0 30px 0; 
+            gap: 20px; 
+            transition: opacity 0.5s ease-out; 
+        }
+        .main-card { 
+            background-color: var(--card-bg); 
+            border-radius: 10px; 
+            box-shadow: 0 10px 40px rgba(233, 30, 99, 0.5); 
+            border: 2px solid var(--primary-color); 
+            padding: 30px; 
+            text-align: center; 
+            flex-grow: 1; 
+            flex-basis: 50%; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: space-between; 
+        }
+
+        /* --- Countdown Card Styles --- */
+        .counter-card h1 { color: var(--primary-dark); font-size: 2.2em; margin-bottom: 5px; font-weight: 900; }
+        .counter-card p.target-date { color: var(--text-dark); font-size: 1.1em; margin-bottom: 30px; border-bottom: 2px dashed var(--primary-color); padding-bottom: 10px; font-weight: 700; }
+        .timer-grid { 
+            display: grid; 
+            grid-template-columns: repeat(2, 1fr); 
+            gap: 15px; 
+            margin-bottom: 20px; 
+            max-width: 350px; 
+            margin-left: auto; 
+            margin-right: auto; 
+        }
+        .value-wrapper { background-color: var(--primary-color); padding: 15px 10px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); margin-bottom: 5px; }
+        .value { font-family: 'Roboto Mono', monospace; font-size: 2.8em; font-weight: 700; line-height: 1.1; color: var(--text-light); }
+        .label { font-size: 0.8em; text-transform: uppercase; font-weight: 700; letter-spacing: 1px; color: var(--text-dark); }
+        
+        /* Calendar Styles - Stable */
+        .calendar-header { color: var(--text-light); font-size: 1.8em; font-weight: 900; margin-bottom: 15px; background-color: var(--primary-dark); padding: 10px 0; border-radius: 8px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; flex-grow: 1; padding: 5px; grid-auto-rows: 1fr; align-content: space-around; }
+        .day-label { color: var(--primary-dark); text-transform: uppercase; font-size: 0.75em; font-weight: 700; padding: 5px 0; }
+        .date-cell { font-family: var(--font-family); color: var(--text-dark); font-size: 1em; padding: 8px 0; border-radius: 4px; background-color: var(--calendar-day-bg); font-weight: 600; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; }
+        .empty-cell { background: none; border: none; }
+        .bold-date { font-weight: 900; background-color: var(--primary-color) !important; color: var(--text-light) !important; animation: glow 1.5s infinite alternate; }
+        @keyframes glow { 
+            from { box-shadow: 0 0 5px rgba(233, 30, 99, 0.7), 0 0 10px rgba(233, 30, 99, 0.4); transform: scale(1.0); }
+            to { box-shadow: 0 0 10px var(--primary-color), 0 0 15px var(--primary-color), 0 0 20px rgba(255, 179, 0, 0.5); transform: scale(1.05); }
+        }
+        
+        /* --- FULLSCREEN CELEBRATION SCREEN (FINAL SCROLL FIX) --- */
+        #celebration-screen {
+            display: none; 
+            position: absolute; 
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 700px;
+            height: auto; 
+            padding: 40px; 
+            margin: 20px 0; /* Ensures scroll padding */
+            
+            z-index: 50; 
+            background: linear-gradient(145deg, var(--primary-color), var(--primary-dark));
+            color: var(--text-light);
+            border-radius: 20px;
+            box-shadow: 0 15px 60px rgba(233, 30, 99, 0.9);
+            animation: popIn 0.8s forwards;
+            border: 5px solid var(--secondary-color);
+            text-align: center;
+        }
+
+        @keyframes popIn {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        #celebration-screen h2 {
+            font-size: 3.2em; 
+            color: var(--secondary-color);
+            margin-bottom: 25px;
+            text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.3);
+        }
+
+        #celebration-message {
+            font-size: 1.4em; 
+            line-height: 1.7;
+            margin-bottom: 40px;
+            font-weight: 500;
+        }
+
+        .celebration-buttons {
+             margin-top: 20px;
+             display: flex; 
+             flex-direction: column;
+             gap: 10px;
+             align-items: center;
+             padding-bottom: 10px; 
+        }
+
+        .celebration-buttons button {
+            padding: 15px 35px;
+            background-color: var(--secondary-color);
+            color: var(--primary-dark);
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1em;
+            font-weight: 900;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        /* --- Made by Hassan Button (RELATIVE TO CARD CONTENT) --- */
+        #credit-btn { 
+            padding: 10px 20px; 
+            background-color: var(--hassan-bg); 
+            color: var(--hassan-text); 
+            border: 3px solid var(--hassan-text); 
+            border-radius: 50px; 
+            font-size: 0.9em; 
+            font-weight: 700; 
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5); 
+            cursor: pointer; 
+            transition: all 0.2s ease-in-out; 
+            letter-spacing: 1px;
+            margin-top: 10px; 
+        }
+
+        /* --- Animation Styles (Confetti) --- */
+        .animation-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
+        .confetti, .heart { position: absolute; width: 10px; height: 10px; opacity: 0; animation: fall linear forwards; font-size: 15px; }
+        .heart { font-size: 20px; }
+        @keyframes fall { 
+            0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; } 
+            100% { transform: translateY(110vh) rotate(720deg); opacity: 0.8; } 
+        }
+
+        /* --- MOBILE RESPONSIVENESS FIXES (Stable Mobile View) --- */
+        @media (max-width: 900px) {
+            .card-wrapper { flex-direction: column; align-items: center; gap: 20px; width: 100%; padding: 0 10px; }
+            .main-card { flex-basis: auto; margin: 0; padding: 20px; flex-grow: 0; width: 100%; max-width: none; }
+            
+            /* Stable Mobile Timer Grid */
+            .timer-grid { 
+                grid-template-columns: repeat(4, 1fr); 
+                max-width: none; 
+                gap: 5px; 
+            }
+            .value { font-size: 1.8em; }
+            .value-wrapper { padding: 10px 5px; }
+            .label { font-size: 0.7em; }
+
+            /* CELEBRATION FIX: Padding adjusted for smaller screen */
+            #celebration-screen { 
+                padding: 25px 15px; 
+                width: 95%; 
+            }
+            #celebration-screen h2 { font-size: 2.2em; }
+            #celebration-message { 
+                font-size: 1.1em; 
+                line-height: 1.5;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars"></div>
+
+    <div class="card-wrapper" id="main-content-cards">
+        
+        <div class="main-card counter-card">
+            <div>
+                <h1>Sania Birthday 🎂</h1>
+                <p class="target-date">Surprise: 02 January 2026 (PKT) tak</p>
+                
+                <div id="timer-display" class="timer-grid">
+                    <div class="timer-box">
+                        <div class="value-wrapper">
+                            <div id="days" class="value">00</div>
+                        </div>
+                        <div class="label">Days</div>
+                    </div>
+                    <div class="timer-box">
+                        <div class="value-wrapper">
+                            <div id="hours" class="value">00</div>
+                        </div>
+                        <div class="label">Hours</div>
+                    </div>
+                    <div class="timer-box">
+                        <div class="value-wrapper">
+                            <div id="minutes" class="value">00</div>
+                        </div>
+                        <div class="label">Minutes</div>
+                    </div>
+                    <div class="timer-box">
+                        <div class="value-wrapper">
+                            <div id="seconds" class="value">00</div>
+                        </div>
+                        <div class="label">Seconds</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-card calendar-card">
+            <div class="calendar-header">
+                January 2026
+            </div>
+            <div class="calendar-grid">
+                <div class="day-label">Sun</div>
+                <div class="day-label">Mon</div>
+                <div class="day-label">Tue</div>
+                <div class="day-label">Wed</div>
+                <div class="day-label">Thu</div>
+                <div class="day-label">Fri</div>
+                <div class="day-label">Sat</div>
+
+                <div class="empty-cell"></div> <div class="empty-cell"></div> <div class="empty-cell"></div> <div class="empty-cell"></div> <div class="date-cell">1</div> <div class="date-cell bold-date">2</div> <div class="date-cell">3</div> 
+                <div class="date-cell">4</div> <div class="date-cell">5</div>
+                <div class="date-cell">6</div>
+                <div class="date-cell">7</div>
+                <div class="date-cell">8</div>
+                <div class="date-cell">9</div>
+                <div class="date-cell">10</div>
+                
+                <div class="date-cell">11</div> <div class="date-cell">12</div>
+                <div class="date-cell">13</div>
+                <div class="date-cell">14</div>
+                <div class="date-cell">15</div>
+                <div class="date-cell">16</div>
+                <div class="date-cell">17</div>
+                
+                <div class="date-cell">18</div> <div class="date-cell">19</div>
+                <div class="date-cell">20</div>
+                <div class="date-cell">21</div>
+                <div class="date-cell">22</div>
+                <div class="date-cell">23</div>
+                <div class="date-cell">24</div>
+                
+                <div class="date-cell">25</div> <div class="date-cell">26</div>
+                <div class="date-cell">27</div>
+                <div class="date-cell">28</div>
+                <div class="date-cell">29</div>
+                <div class="date-cell">30</div>
+                <div class="date-cell">31</div>
+            </div>
+        </div>
+        
+    </div> 
+    
+    <div id="celebration-screen">
+        <h2>🎉 Happy Birthday, Dear Sania! 🎁</h2>
+        <div id="celebration-message">
+             Aaj woh din hai, jab yeh countdown zero hua! ❤️
+             <br><br>
+             May your life be as bright and beautiful as the stars in the night sky. May you achieve all your dreams and always stay happy. You deserve all the joy in the world.
+             <br>
+             **Keep shining bright! ✨**
+            <p style="margin-top: 20px; font-weight: 700;">— With love and best wishes from Hassan ❤️</p>
+        </div>
+        
+        <div class="celebration-buttons">
+            <button onclick="startCelebration(true)">✨ Replay Confetti Animation ✨</button>
+            <button id="credit-btn">Made by Hassan</button>
+        </div>
+    </div>
+    
+    <div id="animation-overlay" class="animation-overlay"></div>
+
+
+    <script>
+        // Target Date: 02 January 2026, 00:00:00 PKT
+        const targetDatePKTString = "January 02, 2026 00:00:00 GMT+0500";
+        const targetDate = new Date(targetDatePKTString).getTime();
+
+        const daysContainer = document.querySelector('#days');
+        const hoursContainer = document.querySelector('#hours');
+        const minutesContainer = document.querySelector('#minutes');
+        const secondsContainer = document.querySelector('#seconds');
+        const mainContentCards = document.getElementById('main-content-cards');
+        const celebrationScreen = document.getElementById('celebration-screen');
+        const animationOverlay = document.getElementById('animation-overlay');
+        const timerDisplay = document.querySelector('.counter-card .timer-grid');
+        
+        const second = 1000;
+        const minute = second * 60;
+        const hour = minute * 60;
+        const day = hour * 24;
+
+        function formatNumber(num) {
+            return num < 10 ? '0' + num : num;
+        }
+
+        function triggerCelebration() {
+            // 1. Hide the main content cards smoothly
+            mainContentCards.style.opacity = '0';
+            setTimeout(() => {
+                mainContentCards.style.display = 'none';
+            }, 500); 
+
+            // 2. Hide timer display (just in case)
+            timerDisplay.style.display = 'none';
+            
+            // 3. Show the new Celebration Screen
+            celebrationScreen.style.display = 'block';
+            
+            // 4. Center the absolute element using JS for better cross-browser compatibility
+            centerCelebrationScreen();
+
+            // 5. Start the advanced animation
+            startCelebration(false);
+        }
+
+        function centerCelebrationScreen() {
+            // Centers the celebration screen vertically and horizontally
+            const screenHeight = window.innerHeight;
+            const cardHeight = celebrationScreen.offsetHeight;
+            
+            // If the card is taller than the screen, start it from the top (top: 20px)
+            // otherwise, center it (top: 50% & translateY: -50%).
+            let topPosition = (screenHeight > cardHeight) ? '50%' : '20px'; 
+            let translateY = (screenHeight > cardHeight) ? '-50%' : '0'; 
+
+            celebrationScreen.style.top = topPosition;
+            celebrationScreen.style.transform = `translate(-50%, ${translateY})`;
+        }
+
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = targetDate - now;
+
+            if (distance < 0) {
+                // Countdown finished!
+                clearInterval(countdownInterval);
+                triggerCelebration();
+                return;
+            }
+
+            const days = Math.floor(distance / day);
+            const hours = Math.floor((distance % day) / hour);
+            const minutes = Math.floor((distance % hour) / minute);
+            const seconds = Math.floor((distance % minute) / second);
+
+            daysContainer.textContent = formatNumber(days);
+            hoursContainer.textContent = formatNumber(hours);
+            minutesContainer.textContent = formatNumber(minutes);
+            secondsContainer.textContent = formatNumber(seconds);
+        }
+
+        // Advanced Celebration Function 
+        window.startCelebration = function(isReplay) {
+            animationOverlay.innerHTML = ''; 
+            
+            if (isReplay) {
+                 celebrationScreen.style.animation = 'none'; 
+                 void celebrationScreen.offsetWidth; 
+                 celebrationScreen.style.animation = 'popIn 0.8s forwards'; 
+                 centerCelebrationScreen(); 
+            }
+
+            const totalItems = 250; 
+            const colors = [
+                '#e91e63', '#ffb300', '#f44336', '#4caf50', '#03a9f4', '#ffffff'
+            ]; 
+
+            for (let i = 0; i < totalItems; i++) {
+                const item = document.createElement('div');
+                
+                if (Math.random() < 0.3) {
+                    item.className = 'heart';
+                    item.innerHTML = '&#10084;'; 
+                    item.style.color = '#e91e63'; 
+                } else {
+                    item.className = 'confetti';
+                    item.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    item.style.width = (Math.random() * 10 + 5) + 'px'; 
+                    item.style.height = (Math.random() * 18 + 5) + 'px';
+                }
+
+                item.style.left = Math.random() * 100 + 'vw';
+                item.style.animationDelay = Math.random() * 5 + 's'; 
+                item.style.animationDuration = Math.random() * 5 + 4 + 's'; 
+                
+                animationOverlay.appendChild(item);
+            }
+        }
+        
+        updateCountdown();
+        window.addEventListener('resize', centerCelebrationScreen); 
+        const countdownInterval = setInterval(updateCountdown, 1000); 
+    </script>
+
+</body>
+</html>
